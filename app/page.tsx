@@ -1,113 +1,306 @@
-import Image from "next/image";
+"use client";
+
+import { ChangeEvent, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DateTimePicker } from "@/components/DateTimePicker";
+
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function Home() {
+  const [data, setData] = useState<{
+    cartValue: number | undefined;
+    distance: number | undefined;
+    itemCount: number | undefined;
+  }>({
+    cartValue: undefined,
+    distance: undefined,
+    itemCount: undefined,
+  });
+  const [date, setDate] = useState<
+    | {
+        date: Date;
+        hasTime: boolean;
+      }
+    | undefined
+  >();
+
+  const [deliveryOption, setDeliverOption] = useState<"asap" | "later" | "">(
+    "",
+  );
+
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [timeoutId, setTimeoutId] = useState<any>(null);
+
+  const [deliveryFee, setDeliveryFee] = useState<number | undefined>(undefined);
+
+  const handleNumberOnChange = (
+    e: ChangeEvent<HTMLInputElement>,
+    isFloat: boolean = false,
+  ) => {
+    const inputValue = e.target.value;
+    const fieldName = e.target.name as keyof typeof data;
+
+    let newValue = isFloat
+      ? /^\d+\.?\d{0,2}$/.test(inputValue) || inputValue === ""
+        ? inputValue === "" || /^\d+\.$/.test(inputValue)
+          ? inputValue
+          : parseFloat(inputValue)
+        : data[fieldName] || ""
+      : /^\d+$/g.test(inputValue) || inputValue === ""
+        ? inputValue === ""
+          ? ""
+          : parseInt(inputValue)
+        : data[fieldName] || "";
+
+    setData((prev) => ({
+      ...prev,
+      [fieldName]: newValue,
+    }));
+  };
+
+  const deliveryOptionHandler = (value: string) => {
+    if (value === "asap") {
+      setDate({ date: new Date(Date.now()), hasTime: true });
+    }
+    setDeliverOption(value as typeof deliveryOption);
+  };
+
+  const errorMissingFieldHandler = () => {
+    let errors = "";
+    if (!data.cartValue || data.cartValue == 0) {
+      errors += "Cart value,\xa0";
+    }
+    if (!data.distance || data.distance == 0) {
+      errors += "Distance,\xa0";
+    }
+    if (!data.itemCount || data.itemCount == 0) {
+      errors += "Amount,\xa0";
+    }
+    if (!date?.date || !date?.hasTime) {
+      errors += "Delivery time,\xa0";
+    }
+
+    if (errors.length > 0) {
+      errors = errors.slice(0, -2);
+      setErrorMessage(`Field(s): ${errors} must be valid`);
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+        setTimeoutId(null);
+      }
+      setTimeoutId(
+        setTimeout(() => {
+          setErrorMessage("");
+        }, 5000),
+      );
+      return true;
+    } else {
+      setErrorMessage("");
+      return false;
+    }
+  };
+
+  const calculateDeliveryFee = () => {
+    if (errorMissingFieldHandler()) {
+      return;
+    }
+
+    let deliveryFee = 0;
+    //The delivery is free (0€) when the cart value is equal or more than 200€.
+    if (data.cartValue && data.cartValue >= 200) {
+      setDeliveryFee(0);
+      console.log(deliveryFee);
+      return;
+    }
+    //If the cart value is less than 10€, a small order surcharge is added to the delivery price. The surcharge is the difference between the cart value and 10€. For example if the cart value is 8.90€, the surcharge will be 1.10€.
+    if (data.cartValue && data.cartValue < 10) {
+      deliveryFee += 10 - data.cartValue;
+    }
+    //A delivery fee for the first 1000 meters (=1km) is 2€. If the delivery distance is longer than that, 1€ is added for every additional 500 meters
+    if (data.distance) {
+      deliveryFee += 2 + Math.max(0, Math.ceil((data.distance - 1000) / 500));
+    }
+    //If the number of items is five or more, an additional 50 cent surcharge is added for each item above and including the fifth item. An extra "bulk" fee applies for more than 12 items of 1,20€
+    if (data.itemCount && data.itemCount > 4) {
+      const extraBulkFee = data.itemCount > 12 ? 1.2 : 0;
+      deliveryFee += (data.itemCount - 4) * 0.5 + extraBulkFee;
+    }
+    //During the Friday rush, 3 - 7 PM, the delivery fee (the total fee including possible surcharges) will be multiplied by 1.2x.
+    if (date?.date.getDay() == 5) {
+      if (date?.date.getHours() >= 15 && date?.date.getHours() <= 18) {
+        deliveryFee *= 1.2;
+      }
+    }
+    //The delivery fee can never be more than 15€, including possible surcharges.
+    if (deliveryFee > 0)
+      setDeliveryFee(Math.min(15, Number.parseFloat(deliveryFee.toFixed(2))));
+  };
+
+  const resetFormHandler = () => {
+    setData({
+      cartValue: undefined,
+      distance: undefined,
+      itemCount: undefined,
+    });
+    setDate(undefined);
+    setDeliverOption("");
+    clearTimeout(timeoutId);
+    setTimeoutId(null);
+    setErrorMessage("");
+    setDeliveryFee(undefined);
+  };
+
+  console.log(data);
+  console.log(date);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      <Card className="w-96">
+        <CardHeader>
+          <CardTitle className="text-primary">
+            Delivery Fee Calculator
+          </CardTitle>
+          <CardDescription>
+            Precisely calculate delivery fee on your order
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form>
+            <div className="grid w-full items-center gap-4">
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="name">Cart value (in €)</Label>
+                <Input
+                  accept=""
+                  value={data.cartValue ? data.cartValue : ""}
+                  id="cartValue"
+                  name="cartValue"
+                  type="text"
+                  placeholder="e.g.: €20"
+                  onChange={(e) => handleNumberOnChange(e, true)}
+                />
+              </div>
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="name">Delivery distance (in meter)</Label>
+                <Input
+                  value={data.distance ? data.distance : ""}
+                  id="distance"
+                  name="distance"
+                  type="text"
+                  placeholder="e.g.: 800m"
+                  onChange={handleNumberOnChange}
+                />
+              </div>
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="name">Amount of items</Label>
+                <Input
+                  value={data.itemCount ? data.itemCount : ""}
+                  id="itemCount"
+                  name="itemCount"
+                  type="text"
+                  placeholder="e.g.: 3"
+                  onChange={handleNumberOnChange}
+                />
+              </div>
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="name">Delivery Time</Label>
+                <Select
+                  value={deliveryOption}
+                  onValueChange={deliveryOptionHandler}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select delivery time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asap">As soon as possible</SelectItem>
+                    <SelectItem value="later">Scheduled delivery</SelectItem>
+                  </SelectContent>
+                </Select>
+                {deliveryOption == "later" ? (
+                  <DateTimePicker
+                    value={date}
+                    onChange={setDate}
+                  ></DateTimePicker>
+                ) : null}
+              </div>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button variant="outline" onClick={resetFormHandler}>
+            Reset
+          </Button>
+          <Button onClick={calculateDeliveryFee}>Calculate</Button>
+        </CardFooter>
+        {errorMessage && (
+          <CardFooter>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          </CardFooter>
+        )}
+        {deliveryFee !== undefined && (
+          <CardFooter>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-full">
+                    Final delivering cost
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-normal">Item subtotal</TableCell>
+                  <TableCell className="text-right">
+                    €{data.cartValue}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-normal">Delivery fee</TableCell>
+                  <TableCell className="text-right">
+                    {deliveryFee == 0 ? "Free" : "€" + deliveryFee}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-semibold">Total</TableCell>
+                  <TableCell className="text-right font-semibold">
+                    €{deliveryFee + (data.cartValue || 0)}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardFooter>
+        )}
+      </Card>
     </main>
   );
 }
