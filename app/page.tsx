@@ -85,6 +85,10 @@ export default function Home() {
     }));
   };
 
+  const handleDateTimeChange = (newDateTime: Date) => {
+    setDate({ date: newDateTime, hasTime: true });
+  }
+
   const deliveryOptionHandler = (value: string) => {
     if (value === "asap") {
       setDate({ date: new Date(Date.now()), hasTime: true });
@@ -181,6 +185,8 @@ export default function Home() {
     setDeliveryFee(undefined);
   };
 
+  console.log(data, date)
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <Card className="w-96">
@@ -253,6 +259,7 @@ export default function Home() {
                   <DateTimePicker
                     value={date}
                     onChange={setDate}
+                    data-test-id="orderTime"
                   ></DateTimePicker>
                 ) : null}
               </div>
