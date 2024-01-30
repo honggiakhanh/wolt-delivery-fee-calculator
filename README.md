@@ -14,9 +14,12 @@ This is a simple web application for precisely calculating the delivery fee base
     npm install
     ```
 
-3. **Run the application:**
+3. **Build and run the application:**
     ```bash
-    npm run dev
+    npm run build
+    ```
+    ```bash
+    npm start
     ```
 
 4. **Open your browser and navigate to [http://localhost:3000](http://localhost:3000) to use the Delivery Fee Calculator.**
