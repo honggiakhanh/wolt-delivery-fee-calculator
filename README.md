@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Delivery Fee Calculator
 
-## Getting Started
+This is a simple web application for precisely calculating the delivery fee based on various parameters such as cart value, delivery distance, number of items, and delivery time. This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-First, run the development server:
+## Getting started
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. **Clone the repository to your local machine:**
+    ```bash
+    git clone https://github.com/honggiakhanh/wolt-delivery-fee-calculator
+    ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Run the application:**
+    ```bash
+    npm run dev
+    ```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+4. **Open your browser and navigate to [http://localhost:3000](http://localhost:3000) to use the Delivery Fee Calculator.**
 
-## Learn More
+## About
 
-To learn more about Next.js, take a look at the following resources:
+The Delivery Fee Calculator offers a user-friendly interface, allowing you to presicely calculate your delivery fee based on your cart value, delivery distance, item count and desired delivery time. 
+Delivery Fee Calculator was build on top of the [shadcn](https://ui.shadcn.com/) UI library, providing fully customizable and fully accessible component, adhering to Web Content Accessibility Guidelines (WCAG) standards.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Dependencies
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- React
+- shadcn/ui
 
-## Deploy on Vercel
+## How It Works
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The application takes input values for cart value, delivery distance, number of items, and delivery time. The delivery fee is dynamically calculated according to a set of rules:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- Free delivery for cart values equal to or more than €200.
+- Small order surcharge for cart values less than €10.
+- Delivery fee based on the distance, with an additional charge for distances exceeding 1km.
+- Surcharge for more than five items, with an extra "bulk" fee for more than 12 items.
+- Friday rush hours multiplier (1.2x) for deliveries between 3 PM and 7 PM.
+- The total delivery fee is capped at €15.
+
