@@ -19,7 +19,7 @@ import {
   useTimeFieldState,
 } from "react-stately";
 import { cn } from "../lib/utils";
-// imports from shadcn/ui
+
 import { Button } from "./ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Toggle } from "./ui/toggle";
@@ -107,7 +107,7 @@ function TimeField({
 
 const dateToCalendarDateTime = (date: Date): CalendarDateTime => {
   const year = date.getFullYear();
-  const month = date.getMonth() + 1; // JavaScript months are 0-based
+  const month = date.getMonth() + 1;
   const day = date.getDate();
   const hour = date.getHours();
   const minute = date.getMinutes();
@@ -134,7 +134,7 @@ const DateTimePicker = (props: DatePickerProps) => {
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const [open, setOpen] = useState(false);
-  const hasTime = props.value?.hasTime || false;
+  const hasTime = props.value?.hasTime || true;
 
   const onChangeWrapper = (value: DateValue, newHasTime?: boolean) => {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;

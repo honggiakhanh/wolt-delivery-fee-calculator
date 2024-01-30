@@ -27,7 +27,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -46,9 +45,9 @@ export default function Home() {
   });
   const [date, setDate] = useState<
     | {
-        date: Date;
-        hasTime: boolean;
-      }
+      date: Date;
+      hasTime: boolean;
+    }
     | undefined
   >();
 
@@ -69,7 +68,7 @@ export default function Home() {
     const fieldName = e.target.name as keyof typeof data;
 
     let newValue = isFloat
-      ? /^\d+\.?\d{0,2}$/.test(inputValue) || inputValue === ""
+      ? /^\d+(\.\d{0,2})?$/.test(inputValue) || inputValue === ""
         ? inputValue === "" || /^\d+\.$/.test(inputValue)
           ? inputValue
           : parseFloat(inputValue)
@@ -132,11 +131,16 @@ export default function Home() {
       return;
     }
 
+    setData((prev) => ({
+      ...prev,
+      cartValue: data.cartValue ? data.cartValue * 1 : undefined
+    }))
+
     let deliveryFee = 0;
     //The delivery is free (0€) when the cart value is equal or more than 200€.
     if (data.cartValue && data.cartValue >= 200) {
+
       setDeliveryFee(0);
-      console.log(deliveryFee);
       return;
     }
     //If the cart value is less than 10€, a small order surcharge is added to the delivery price. The surcharge is the difference between the cart value and 10€. For example if the cart value is 8.90€, the surcharge will be 1.10€.
@@ -177,9 +181,6 @@ export default function Home() {
     setDeliveryFee(undefined);
   };
 
-  console.log(data);
-  console.log(date);
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <Card className="w-96">
@@ -193,19 +194,21 @@ export default function Home() {
         </CardHeader>
         <CardContent>
           <form>
+
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="name">Cart value (in €)</Label>
                 <Input
-                  accept=""
                   value={data.cartValue ? data.cartValue : ""}
                   id="cartValue"
                   name="cartValue"
                   type="text"
                   placeholder="e.g.: €20"
                   onChange={(e) => handleNumberOnChange(e, true)}
+                  data-test-id="cartValue"
                 />
               </div>
+
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="name">Delivery distance (in meter)</Label>
                 <Input
@@ -215,8 +218,10 @@ export default function Home() {
                   type="text"
                   placeholder="e.g.: 800m"
                   onChange={handleNumberOnChange}
+                  data-test-id="deliveryDistance"
                 />
               </div>
+
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="name">Amount of items</Label>
                 <Input
@@ -226,8 +231,10 @@ export default function Home() {
                   type="text"
                   placeholder="e.g.: 3"
                   onChange={handleNumberOnChange}
+                  data-test-id="numberOfItems"
                 />
               </div>
+
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="name">Delivery Time</Label>
                 <Select
@@ -252,12 +259,14 @@ export default function Home() {
             </div>
           </form>
         </CardContent>
+
         <CardFooter className="flex justify-between">
           <Button variant="outline" onClick={resetFormHandler}>
             Reset
           </Button>
           <Button onClick={calculateDeliveryFee}>Calculate</Button>
         </CardFooter>
+
         {errorMessage && (
           <CardFooter>
             <Alert variant="destructive">
@@ -267,6 +276,7 @@ export default function Home() {
             </Alert>
           </CardFooter>
         )}
+
         {deliveryFee !== undefined && (
           <CardFooter>
             <Table>
@@ -292,7 +302,7 @@ export default function Home() {
                 </TableRow>
                 <TableRow>
                   <TableCell className="font-semibold">Total</TableCell>
-                  <TableCell className="text-right font-semibold">
+                  <TableCell data-test-id="fee" className="text-right font-semibold">
                     €{deliveryFee + (data.cartValue || 0)}
                   </TableCell>
                 </TableRow>
